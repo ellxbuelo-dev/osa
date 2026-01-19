@@ -13,6 +13,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: Go/go.mod
+          cache-dependency-path: Go/go.sum
 
       - name: gofmt
         working-directory: Go
