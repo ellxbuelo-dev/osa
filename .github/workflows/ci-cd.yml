@@ -1,0 +1,62 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: GO/go.mod
+
+      - name: gofmt
+        working-directory: GO
+        run: test -z "$(gofmt -l .)"
+
+      - name: go vet
+        working-directory: GO
+        run: go vet ./...
+
+  build_and_deploy:
+    needs: [lint]
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image on VM
+        run: docker build -t ose-api:latest ./GO
+
+      - name: Ensure deploy folder exists
+        run: mkdir -p ~/ose-app
+
+      - name: Write docker-compose.yml
+        run: |
+          cat > ~/ose-app/docker-compose.yml <<'YAML'
+          services:
+            api:
+              image: ose-api:latest
+              container_name: ose-api
+              ports:
+                - "8080:8080"
+              environment:
+                DB_HOST: host.docker.internal
+                DB_PORT: "5432"
+                DB_USER: "api"
+                DB_PASSWORD: "superpass"
+                DB_NAME: "api"
+                DB_SSLMODE: "disable"
+              extra_hosts:
+                - "host.docker.internal:host-gateway"
+              restart: unless-stopped
+          YAML
+
+      - name: Deploy
+        run: |
+          cd ~/ose-app
+          docker compose up -d --force-recreate
+          curl -sf http://localhost:8080/health
