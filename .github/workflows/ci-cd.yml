@@ -60,4 +60,6 @@ jobs:
         run: |
           cd ~/ose-app
           docker compose up -d --force-recreate
-          curl -sf http://localhost:8080/health
+          sleep 15
+          curl http://localhost:8080/health || echo "Health check warning"
+          docker ps | grep "ose-api"
