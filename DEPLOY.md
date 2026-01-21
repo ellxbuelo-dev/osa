@@ -3,8 +3,6 @@ DEPLOY.md
 
 Небольшой Go API-сервис с несколькими endpoint’ами. Хранит данные в PostgreSQL.
 
-Требования
-
 Ubuntu Server (VM), без GUI
 Docker + Docker Compose v2 (docker compose)
 PostgreSQL установлен на хосте VM, не в контейнере
